@@ -1,0 +1,9 @@
+import jwt from 'jsonwebtoken'
+import { Request } from 'express'
+
+export const getToken = (_id: any) => {
+    const secret = process.env.JWTSECRET as string
+    return jwt.sign({ _id }, secret, {
+        expiresIn: '30d',
+    })
+}

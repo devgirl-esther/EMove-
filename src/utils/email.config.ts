@@ -16,7 +16,7 @@ export const sendEmail = async (email:any, subject:any, text:any) => {
         from: process.env.USEREMAIL,
         to: email,
         subject: subject,
-        text: text,
+        html: text,
     })
     console.log("Email sent Successfully");
  }catch(err){

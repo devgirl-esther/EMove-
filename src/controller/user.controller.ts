@@ -6,6 +6,8 @@ import { sendEmail } from '../utils/email.config';
 import crypto from 'crypto';
 import { getToken, loginToken } from '../utils/token';
 import { compare } from '../utils/passwordHashing';
+import bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
 
 export const register = async (
     req: Request,
@@ -43,12 +45,12 @@ export const register = async (
         <h2>Hello ${userSaved.name}</h2>
         <p>Click the link below to verify mail</p>
         <a href=${url}>verify mail</a>
-        </div>`
+        </div>`;
         await sendEmail(userSaved.email, 'Verify email', html);
         return res.status(200).send({
             message: 'An email has been sent to your account please verify',
             userId: userSaved._id,
-            token: token.token
+            token: token.token,
         });
     } catch (error) {
         return res.status(500).send({
@@ -130,5 +132,69 @@ export const login = async (
         });
     } catch (error) {
         res.status(400).send('Error occured');
+    }
+};
+
+export const changePassword = async (req: Request, res: Response) => {
+    const { currentPassword, newPassword, confirmNewPassword } = req.body;
+    const { authorization } = req.headers;
+    if (!authorization) {
+        console.log('auth fired');
+        return res
+            .status(401)
+            .json({ error: 'Access denied. No token provided.' });
+    }
+
+    // Get the JWT token from the authorization header
+    const token = authorization.split(' ')[1];
+    const secret: string = process.env.JWTSECRET as string;
+
+    // Decode the JWT and extract the user ID
+    try {
+        const decoded: { _id: string } = (await jwt.verify(token, secret)) as {
+            _id: string;
+        };
+        if (!decoded) {
+            return res.status(400).json({ error: 'Invalid token' });
+        }
+
+        const userId = decoded._id;
+
+        try {
+            // Find the user by their ID
+            const user = await User.findById(userId);
+            if (user) {
+                // Check if the current password matches
+                const passwordMatches = await bcrypt.compare(
+                    currentPassword,
+                    user.password
+                );
+                if (!passwordMatches) {
+                    return res
+                        .status(400)
+                        .json({ error: 'Current password is incorrect' });
+                }
+                // Check if the new password and confirmation match
+                if (newPassword !== confirmNewPassword) {
+                    return res
+                        .status(400)
+                        .json({ error: 'New passwords do not match' });
+                }
+                // Hash the new password and save it to the database
+                const hashedPassword = await bcrypt.hash(newPassword, 10);
+                user.password = hashedPassword;
+                await user.save();
+                // Send a success response
+                return res.status(200).json({
+                    message: 'Password updated successfully',
+                    status: 'sucess',
+                });
+            }
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    } catch (err) {
+        res.status(400).json({ error: 'Invalid token' });
     }
 };

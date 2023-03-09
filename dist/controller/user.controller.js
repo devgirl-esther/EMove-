@@ -138,6 +138,11 @@ const login = async (req, res, next) => {
 exports.login = login;
 const changePassword = async (req, res) => {
     const { currentPassword, newPassword, confirmNewPassword } = req.body;
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+        return res
+            .status(400)
+            .json({ error: 'fill required password' });
+    }
     const { authorization } = req.headers;
     if (!authorization) {
         console.log('auth fired');

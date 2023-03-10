@@ -3,11 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.login = exports.verifyEmail = exports.register = void 0;
+exports.resetPassword = exports.forgotPassword = exports.login = exports.verifyEmail = exports.register = void 0;
 const userModel_1 = __importDefault(require("../model/userModel"));
 const tokenModel_1 = __importDefault(require("../model/tokenModel"));
 const passwordHashing_1 = require("../utils/passwordHashing");
 const email_config_1 = require("../utils/email.config");
+const crypto_1 = __importDefault(require("crypto"));
+const joi_1 = __importDefault(require("joi"));
 const token_1 = require("../utils/token");
 const passwordHashing_2 = require("../utils/passwordHashing");
 const register = async (req, res, next) => {
@@ -111,3 +113,55 @@ const login = async (req, res, next) => {
     }
 };
 exports.login = login;
+const forgotPassword = async (req, res, next) => {
+    try {
+        const schema = joi_1.default.object({ email: joi_1.default.string().email().required() });
+        const { error } = schema.validate(req.body);
+        if (error)
+            return res.status(400).send(error.details[0].message);
+        const user = await userModel_1.default.findOne({ email: req.body.email });
+        if (!user)
+            return res.status(400).send("user with given email doesn't exist");
+        let token = await tokenModel_1.default.findOne({ userId: user._id });
+        if (!token) {
+            token = await new tokenModel_1.default({
+                userId: user._id,
+                token: crypto_1.default.randomBytes(32).toString("hex"),
+            }).save();
+        }
+        const link = `${process.env.BASE_URL}/password-reset/${user._id}/${token.token}`;
+        await (0, email_config_1.sendEmail)(user.email, "Password reset", link);
+        res.send("password reset link sent to your email account");
+    }
+    catch (error) {
+        res.send("An error occured");
+        console.log(error);
+    }
+};
+exports.forgotPassword = forgotPassword;
+const resetPassword = async (req, res, next) => {
+    try {
+        const schema = joi_1.default.object({ password: joi_1.default.string().required() });
+        const { error } = schema.validate(req.body);
+        if (error)
+            return res.status(400).send(error.details[0].message);
+        const user = await userModel_1.default.findById(req.params.userId);
+        if (!user)
+            return res.status(400).send("invalid link or expired");
+        const token = await tokenModel_1.default.findOne({
+            userId: user._id,
+            token: req.params.token,
+        });
+        if (!token)
+            return res.status(400).send("Invalid link or expired");
+        user.password = req.body.password;
+        await user.save();
+        await token.delete();
+        res.send("password reset sucessfully.");
+    }
+    catch (error) {
+        res.send("An error occured");
+        console.log(error);
+    }
+};
+exports.resetPassword = resetPassword;

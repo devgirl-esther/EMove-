@@ -5,6 +5,6 @@ import { createRoute, updateRoutePrice } from "../controller/route";
 const router = express.Router();
 
 router.post("/create", createRoute);
-router.patch("/edit", updateRoutePrice);
+router.patch("/edit/:id", updateRoutePrice);
 
 export default router;

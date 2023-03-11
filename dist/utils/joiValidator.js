@@ -8,6 +8,9 @@ const routeSchema = Joi.object({
     destination: Joi.string().required(),
     price: Joi.number().required().min(0)
 });
+const routePriceSchema = Joi.object({
+    price: Joi.number().required().min(0)
+});
 // Validate a route object against the schema
 function validateRoute(route) {
     return routeSchema.validate(route);
@@ -15,6 +18,6 @@ function validateRoute(route) {
 exports.validateRoute = validateRoute;
 // Validate a route  price against the schema
 function validateRoutePrice(price) {
-    return routeSchema.validate(routeSchema.price(price));
+    return routePriceSchema.validate(price);
 }
 exports.validateRoutePrice = validateRoutePrice;

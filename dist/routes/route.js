@@ -7,5 +7,5 @@ const express_1 = __importDefault(require("express"));
 const route_1 = require("../controller/route");
 const router = express_1.default.Router();
 router.post("/create", route_1.createRoute);
-router.patch("/edit", route_1.updateRoutePrice);
+router.patch("/edit/:id", route_1.updateRoutePrice);
 exports.default = router;

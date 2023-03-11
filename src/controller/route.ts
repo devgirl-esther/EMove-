@@ -12,8 +12,6 @@ export const createRoute = async (req: Request, res: Response) => {
         return res.status(400).json({error: err.message})
     }
 
-    console.log({pickup,destination,price})
-
     try {
         const newRoute = new Route({
             pickup: pickup,
@@ -30,19 +28,19 @@ export const createRoute = async (req: Request, res: Response) => {
 
 export const updateRoutePrice = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { newPrice } = req.body;
-    
+    const { price } = req.body;
       try {
-          const { error } = validateRoutePrice(parseInt(newPrice));
-        if (error) throw new Error(error.details[0].message);
-    } catch (err:any) {
+          const { error } = validateRoutePrice({price});
+          if (error) throw new Error(error.details[0].message);
+      } catch (err: any) {
+          console.log(err.message)
         return res.status(400).json({error: err.message})
       }
     
     try {
-        const result = await Route.findByIdAndUpdate({ _id: id }, { $set: { price: newPrice } });
+        const result = await Route.findByIdAndUpdate({ _id: id }, { $set: { price: price } });
         if (result) {
-            res.status(201).json({ message: "price updated successfully", data: result })
+            res.status(201).json({ message: "price updated successfully"})
         }
     } catch (err: any) {
         res.status(500).json({message: err.message})

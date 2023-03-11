@@ -10,6 +10,7 @@ import { compare } from '../utils/passwordHashing';
 import bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 
+
 export const register = async (
     req: Request,
     res: Response,

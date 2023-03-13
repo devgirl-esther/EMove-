@@ -7,7 +7,6 @@ import crypto from 'crypto';
 import Joi from "joi"
 import { getToken, loginToken } from '../utils/token';
 import { compare } from '../utils/passwordHashing';
-
 export const register = async (
     req: Request,
     res: Response,
@@ -157,6 +156,7 @@ export const forgotPassword  =async (
     
             const link = `${process.env.BASE_URL}/password-reset/${user._id}/${token.token}`;
             await sendEmail(user.email, "Password reset", link);
+            //send password reset link to email
     
             res.send("password reset link sent to your email account");
         } catch (error) {
@@ -194,7 +194,8 @@ export const forgotPassword  =async (
             console.log(error);
         }
     
-}
+    }
+
 
 
 

@@ -4,7 +4,7 @@ import Token from '../model/tokenModel';
 import { toHash } from '../utils/passwordHashing';
 import { sendEmail } from '../utils/email.config';
 import crypto from 'crypto';
-import Joi from "joi"
+import Joi from 'joi';
 import { getToken, loginToken } from '../utils/token';
 import { compare } from '../utils/passwordHashing';
 import bcrypt from 'bcrypt';
@@ -139,9 +139,7 @@ export const login = async (
 export const changePassword = async (req: Request, res: Response) => {
     const { currentPassword, newPassword, confirmNewPassword } = req.body;
     if (!currentPassword || !newPassword || !confirmNewPassword) {
-         return res
-            .status(400)
-            .json({ error: 'fill required password' });
+        return res.status(400).json({ error: 'fill required password' });
     }
 
     const { authorization } = req.headers;
@@ -205,74 +203,65 @@ export const changePassword = async (req: Request, res: Response) => {
         res.status(400).json({ error: 'Invalid token' });
     }
 };
-export const forgotPassword  =async (
-    req:Request,
-    res:Response,
-    next:NextFunction
-    ) => {
-        try {
-            const schema = Joi.object({ email: Joi.string().email().required() });
-            const { error } = schema.validate(req.body);
-            if (error) return res.status(400).send(error.details[0].message);
+export const forgotPassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const schema = Joi.object({ email: Joi.string().email().required() });
+        const { error } = schema.validate(req.body);
+        if (error) return res.status(400).send(error.details[0].message);
 
-            const user = await User.findOne({ email: req.body.email });
-            if (!user)
-                return res.status(400).send("user with given email doesn't exist");
+        const user = await User.findOne({ email: req.body.email });
+        if (!user)
+            return res.status(400).send("user with given email doesn't exist");
 
-            let token = await Token.findOne({ userId: user._id });
-            if (!token) {
-                token = await new Token({
-                    userId: user._id,
-                    token: crypto.randomBytes(32).toString("hex"),
-                }).save();
-            }
-
-            const link = `${process.env.BASE_URL}/password-reset/${user._id}/${token.token}`;
-            await sendEmail(user.email, "Password reset", link);
-
-            res.send("password reset link sent to your email account");
-        } catch (error) {
-            res.send("An error occured");
-            console.log(error);
-        }
-    };
-
-    export const  resetPassword = async (
-        req:Request,
-        res:Response,
-        next:NextFunction
-        ) => {
-        try {
-            const schema = Joi.object({ password: Joi.string().required() });
-            const { error } = schema.validate(req.body);
-            if (error) return res.status(400).send(error.details[0].message);
-
-            const user = await User.findById(req.params.userId);
-            if (!user) return res.status(400).send("invalid link or expired");
-
-            const token = await Token.findOne({
+        let token = await Token.findOne({ userId: user._id });
+        if (!token) {
+            token = await new Token({
                 userId: user._id,
-                token: req.params.token,
-            });
-            if (!token) return res.status(400).send("Invalid link or expired");
-
-            user.password = req.body.password;
-            await user.save();
-            await token.delete();
-
-            res.send("password reset sucessfully.");
-        } catch (error) {
-            res.send("An error occured");
-            console.log(error);
+                token: crypto.randomBytes(32).toString('hex'),
+            }).save();
         }
 
-}
+        const link = `${process.env.BASE_URL}/password-reset/${user._id}/${token.token}`;
+        await sendEmail(user.email, 'Password reset', link);
+        //send password reset link to email
 
+        res.send('password reset link sent to your email account');
+    } catch (error) {
+        res.send('An error occured');
+        console.log(error);
+    }
+};
 
+export const resetPassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const schema = Joi.object({ password: Joi.string().required() });
+        const { error } = schema.validate(req.body);
+        if (error) return res.status(400).send(error.details[0].message);
 
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(400).send('invalid link or expired');
 
+        const token = await Token.findOne({
+            userId: user._id,
+            token: req.params.token,
+        });
+        if (!token) return res.status(400).send('Invalid link or expired');
 
+        user.password = req.body.password;
+        await user.save();
+        await token.delete();
 
-
-
-
+        res.send('password reset sucessfully.');
+    } catch (error) {
+        res.send('An error occured');
+        console.log(error);
+    }
+};

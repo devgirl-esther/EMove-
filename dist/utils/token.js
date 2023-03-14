@@ -8,7 +8,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const getToken = (_id) => {
     const secret = process.env.JWTSECRET;
     return jsonwebtoken_1.default.sign({ _id }, secret, {
-        expiresIn: '30d',
+        expiresIn: '24h',
     });
 };
 exports.getToken = getToken;

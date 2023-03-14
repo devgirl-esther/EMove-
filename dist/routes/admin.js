@@ -15,4 +15,6 @@ router.put('/edit-driver/:id', multer_1.upload.fields([
     { name: 'driverId', maxCount: 1 },
     { name: 'photo', maxCount: 1 },
 ]), admin_controller_1.updateDriver);
+router.get('/getAllRoutes', admin_controller_1.getAllRoutes);
+router.get('/getRoute/:id', admin_controller_1.getRoute);
 exports.default = router;

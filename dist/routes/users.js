@@ -12,4 +12,6 @@ router.patch('/change-password', user_controller_1.changePassword);
 router.post('/login', user_controller_1.login);
 router.post('/forgotPassword', user_controller_1.forgotPassword);
 router.post('/resetPassword/:userId/:token', user_controller_1.resetPassword);
+router.get('/getAllRoutes', user_controller_1.getAllRoutes);
+router.get('/getRoute/:id', user_controller_1.getRoute);
 exports.default = router;

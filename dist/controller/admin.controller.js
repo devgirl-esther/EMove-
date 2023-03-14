@@ -3,8 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateDriver = exports.registerDriver = void 0;
+exports.getRoute = exports.getAllRoutes = exports.updateDriver = exports.registerDriver = void 0;
 const driverModel_1 = __importDefault(require("../model/driverModel"));
+const route_1 = __importDefault(require("../model/route"));
 const registerDriver = async (req, res, next) => {
     console.log('controller');
     try {
@@ -59,3 +60,25 @@ const updateDriver = async (req, res, next) => {
     }
 };
 exports.updateDriver = updateDriver;
+const getAllRoutes = async (req, res, next) => {
+    try {
+        const routes = await route_1.default.find();
+        res.send(routes);
+    }
+    catch (error) {
+        res.send('An error occured');
+        console.log(error);
+    }
+};
+exports.getAllRoutes = getAllRoutes;
+const getRoute = async (req, res, next) => {
+    try {
+        const route = await route_1.default.findById(req.params.id);
+        res.send(route);
+    }
+    catch (error) {
+        res.send('An error occured');
+        console.log(error);
+    }
+};
+exports.getRoute = getRoute;

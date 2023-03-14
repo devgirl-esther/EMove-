@@ -6,6 +6,8 @@ import {
     changePassword,
     register,
     verifyEmail,
+    getAllRoutes,
+    getRoute
 } from '../controller/user.controller';
 const router = express.Router();
 
@@ -16,5 +18,7 @@ router.patch('/change-password', changePassword);
 router.post('/login', login);
 router.post('/forgotPassword', forgotPassword);
 router.post('/resetPassword/:userId/:token', resetPassword);
+router.get('/getAllRoutes', getAllRoutes)
+router.get('/getRoute/:id', getRoute);
 
 export default router;

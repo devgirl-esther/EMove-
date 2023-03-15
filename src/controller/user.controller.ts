@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import User from '../model/userModel';
 import Token from '../model/tokenModel';
+import Route from '../model/route'
 import { toHash } from '../utils/passwordHashing';
 import { sendEmail } from '../utils/email.config';
 import crypto from 'crypto';
@@ -261,6 +262,34 @@ export const resetPassword = async (
         await token.delete();
 
         res.send('password reset sucessfully.');
+    } catch (error) {
+        res.send('An error occured');
+        console.log(error);
+    }
+};
+
+export const getAllRoutes = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const routes = await Route.find();
+        res.send(routes);
+    } catch (error) {
+        res.send('An error occured');
+        console.log(error);
+    }
+};
+
+export const getRoute = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const route = await Route.findById(req.params.id);
+        res.send(route);
     } catch (error) {
         res.send('An error occured');
         console.log(error);

@@ -16,10 +16,16 @@ router.put('/edit-driver/:id', multer_1.upload.fields([
     { name: 'driverId', maxCount: 1 },
     { name: 'photo', maxCount: 1 },
 ]), admin_controller_1.updateDriver);
+
 router.get('/allDrivers', admin_controller_1.getAllDrivers);
 router.get('/drivers/:id', admin_controller_1.getOneDriver);
 router.delete('/drivers/:id', admin_controller_1.deleteDriver);
 router.get('/totalSuccessfulRides/:id');
 router.get('/totalPassengers', admin_controller_2.getAllPassengers);
 router.get('/totalDrivers', admin_controller_2.totalDrivers);
+
+router.get('/getAllRoutes', admin_controller_1.getAllRoutes);
+router.get('/getRoute/:id', admin_controller_1.getRoute);
+router.post("/createRoute", admin_controller_2.createRoute);
+router.patch("/editRoute/:id", admin_controller_2.updateRoutePrice);
 exports.default = router;

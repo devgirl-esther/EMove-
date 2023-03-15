@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import Driver from '../model/driverModel';
+import Route from '../model/route';
 
 export const registerDriver = async (
     req: Request,
@@ -63,5 +64,33 @@ export const updateDriver = async (
         status: "fail",
         message: "Database error"
       })
+    }
+};
+
+export const getAllRoutes = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const routes = await Route.find();
+        res.send(routes);
+    } catch (error) {
+        res.send('An error occured');
+        console.log(error);
+    }
+};
+
+export const getRoute = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const route = await Route.findById(req.params.id);
+        res.send(route);
+    } catch (error) {
+        res.send('An error occured');
+        console.log(error);
     }
 };

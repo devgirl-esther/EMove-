@@ -1,6 +1,7 @@
 import express from 'express';
 import { registerDriver, updateDriver, getAllRoutes, getRoute} from '../controller/admin.controller';
 import { upload } from '../utils/multer';
+import { createRoute, updateRoutePrice } from "../controller/admin.controller";
 
 const router = express.Router();
 
@@ -24,4 +25,9 @@ router.put(
 
 router.get('/getAllRoutes', getAllRoutes);
 router.get('/getRoute/:id', getRoute);
+
+router.post("/createRoute", createRoute);
+router.patch("/editRoute/:id", updateRoutePrice);
+
+
 export default router;

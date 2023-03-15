@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const admin_controller_1 = require("../controller/admin.controller");
 const multer_1 = require("../utils/multer");
+const admin_controller_2 = require("../controller/admin.controller");
 const router = express_1.default.Router();
 router.post('/register-driver', multer_1.upload.fields([
     { name: 'driverId', maxCount: 1 },
@@ -15,4 +16,10 @@ router.put('/edit-driver/:id', multer_1.upload.fields([
     { name: 'driverId', maxCount: 1 },
     { name: 'photo', maxCount: 1 },
 ]), admin_controller_1.updateDriver);
+router.get('/allDrivers', admin_controller_1.getAllDrivers);
+router.get('/drivers/:id', admin_controller_1.getOneDriver);
+router.delete('/drivers/:id', admin_controller_1.deleteDriver);
+router.get('/totalSuccessfulRides/:id');
+router.get('/totalPassengers', admin_controller_2.getAllPassengers);
+router.get('/totalDrivers', admin_controller_2.totalDrivers);
 exports.default = router;

@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateRoutePrice = exports.createRoute = void 0;
-const route_1 = __importDefault(require("../model/route"));
+const routeModel_1 = __importDefault(require("../model/routeModel"));
 const joiValidator_1 = require("../utils/joiValidator");
 const createRoute = async (req, res) => {
     const { pickup, destination, price } = req.body;
@@ -17,16 +17,19 @@ const createRoute = async (req, res) => {
         return res.status(400).json({ error: err.message });
     }
     try {
-        const newRoute = new route_1.default({
+        const newRoute = new routeModel_1.default({
             pickup: pickup,
             destination: destination,
-            price: price
+            price: price,
         });
         const route = await newRoute.save();
-        res.status(201).json({ status: "success", result: route });
+        res.status(201).json({ status: 'success', result: route });
     }
     catch (err) {
-        res.status(500).json({ message: "Internal server error", error: err.message });
+        res.status(500).json({
+            message: 'Internal server error',
+            error: err.message,
+        });
     }
 };
 exports.createRoute = createRoute;
@@ -43,9 +46,9 @@ const updateRoutePrice = async (req, res) => {
         return res.status(400).json({ error: err.message });
     }
     try {
-        const result = await route_1.default.findByIdAndUpdate({ _id: id }, { $set: { price: price } });
+        const result = await routeModel_1.default.findByIdAndUpdate({ _id: id }, { $set: { price: price } });
         if (result) {
-            res.status(201).json({ message: "price updated successfully" });
+            res.status(201).json({ message: 'price updated successfully' });
         }
     }
     catch (err) {

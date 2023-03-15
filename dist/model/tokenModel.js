@@ -9,7 +9,7 @@ const tokenSchema = new Schema({
     userId: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: "user",
+        ref: 'user',
     },
     token: {
         type: String,
@@ -18,8 +18,8 @@ const tokenSchema = new Schema({
     createdAt: {
         type: Date,
         default: Date.now,
-        expires: 3600
+        expires: 3600,
     },
 });
-const Token = mongoose_1.default.model("token", tokenSchema);
+const Token = mongoose_1.default.model('token', tokenSchema);
 exports.default = Token;

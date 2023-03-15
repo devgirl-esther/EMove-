@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const admin_controller_1 = require("../controller/admin.controller");
 const multer_1 = require("../utils/multer");
+const admin_controller_2 = require("../controller/admin.controller");
 const router = express_1.default.Router();
 router.post('/register-driver', multer_1.upload.fields([
     { name: 'driverId', maxCount: 1 },
@@ -17,4 +18,6 @@ router.put('/edit-driver/:id', multer_1.upload.fields([
 ]), admin_controller_1.updateDriver);
 router.get('/getAllRoutes', admin_controller_1.getAllRoutes);
 router.get('/getRoute/:id', admin_controller_1.getRoute);
+router.post("/createRoute", admin_controller_2.createRoute);
+router.patch("/editRoute/:id", admin_controller_2.updateRoutePrice);
 exports.default = router;

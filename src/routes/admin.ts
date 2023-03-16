@@ -1,7 +1,19 @@
 import express from 'express';
-import { registerDriver, updateDriver, getAllRoutes, getRoute} from '../controller/admin.controller';
+
+import {
+    deleteDriver,
+    getAllDrivers,
+    getOneDriver,
+    registerDriver,
+    updateDriver,
+} from '../controller/admin.controller';
 import { upload } from '../utils/multer';
+import { totalDrivers, getAllPassengers } from '../controller/admin.controller';
+
+import { registerDriver, updateDriver, getAllRoutes, getRoute} from '../controller/admin.controller';
+
 import { createRoute, updateRoutePrice } from "../controller/admin.controller";
+
 
 const router = express.Router();
 
@@ -23,11 +35,20 @@ router.put(
     updateDriver
 );
 
+
+router.get('/allDrivers', getAllDrivers);
+router.get('/drivers/:id', getOneDriver);
+router.delete('/drivers/:id', deleteDriver);
+router.get('/totalSuccessfulRides/:id');
+router.get('/totalPassengers', getAllPassengers);
+router.get('/totalDrivers', totalDrivers);
+
 router.get('/getAllRoutes', getAllRoutes);
 router.get('/getRoute/:id', getRoute);
 
 router.post("/createRoute", createRoute);
 router.patch("/editRoute/:id", updateRoutePrice);
+
 
 
 export default router;

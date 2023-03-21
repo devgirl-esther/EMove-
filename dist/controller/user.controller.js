@@ -299,7 +299,7 @@ const initPayment = async (req, res, next) => {
             const response = JSON.parse(body);
             const newTransaction = {
                 userId: req.userId,
-                status: 'Credit',
+                transactionType: 'Credit',
                 amount: form.amount,
             };
             const transaction = new transactionModel_1.default(newTransaction);
@@ -321,7 +321,7 @@ const getReference = async (req, res, next) => {
             userId,
             _id: transactionId,
         });
-        if (transaction?.verified === true) {
+        if (transaction?.processed === true) {
             return res.send(`This ${transaction?.status} transaction has already been verified`);
         }
         const ref = req.query.reference;
@@ -336,20 +336,31 @@ const getReference = async (req, res, next) => {
                 'amount',
                 'customer.email',
                 'metadata.full_name',
+                'status',
             ]);
             //I can say for a fact that meeting you is a blessing!
-            const [reference, amount, email, name] = data;
+            const [reference, amount, email, name, status] = data;
             const newDonor = { reference, amount, email, name };
             const donor = new donorModel_1.default(newDonor);
             await donor.save();
             const user = await userModel_1.default.findOne({ email: donor.email });
-            await userModel_1.default.updateOne({ _id: user?._id }, { $inc: { walletBalance: donor.amount / 100 } });
-            const updatedTransaction = await transactionModel_1.default.findByIdAndUpdate({ _id: transactionId }, { verified: true }, { new: true });
-            return res.send({
-                message: "payment successfully verified",
-                donor,
-                transaction: updatedTransaction,
-            });
+            if (status === 'success') {
+                await userModel_1.default.updateOne({ _id: user?._id }, { $inc: { walletBalance: donor.amount / 100 } });
+                const updatedTransaction = await transactionModel_1.default.findByIdAndUpdate({ _id: transactionId }, { processed: true, status: 'accepted' }, { new: true });
+                return res.send({
+                    message: 'Transaction accepted',
+                    donor,
+                    transaction: updatedTransaction,
+                });
+            }
+            else {
+                const updatedTransaction = await transactionModel_1.default.findByIdAndUpdate({ _id: transactionId }, { processed: true, status: 'declined' }, { new: true });
+                return res.send({
+                    message: 'Transaction declined',
+                    donor,
+                    transaction: updatedTransaction,
+                });
+            }
         });
     }
     catch (error) {

@@ -20,5 +20,6 @@ router.post('/forgotPassword', forgotPassword);
 router.post('/resetPassword/:userId/:token', resetPassword);
 router.get('/getAllRoutes', getAllRoutes)
 router.get('/getRoute/:id', getRoute);
+//router.post('/book-trip/:routeId', bookTrip);
 
 export default router;

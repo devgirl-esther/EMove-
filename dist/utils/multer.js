@@ -23,7 +23,6 @@ const storage = new multer_storage_cloudinary_1.CloudinaryStorage({
     },
 });
 const fileFilter = (request, file, callback) => {
-    console.log('hiii');
     if (!file.originalname.match(/\.(jpg|jpeg|png|pdf)$/)) {
         return callback(new Error('File type not supported'));
     }

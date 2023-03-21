@@ -26,7 +26,6 @@ const fileFilter = (
     file: Express.Multer.File,
     callback: FileFilterCallback
 ): void => {
-    console.log('hiii');
     if (!file.originalname.match(/\.(jpg|jpeg|png|pdf)$/)) {
         return callback(new Error('File type not supported'));
     }

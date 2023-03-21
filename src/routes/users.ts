@@ -7,8 +7,11 @@ import {
     register,
     verifyEmail,
     getAllRoutes,
-    getRoute
+    getRoute,
+    initPayment,
+    getReference
 } from '../controller/user.controller';
+import { authMiddleware } from '../middlewares/auth';
 const router = express.Router();
 
 
@@ -20,5 +23,7 @@ router.post('/forgotPassword', forgotPassword);
 router.post('/resetPassword/:userId/:token', resetPassword);
 router.get('/getAllRoutes', getAllRoutes)
 router.get('/getRoute/:id', getRoute);
+router.post("/paystack/pay", authMiddleware, initPayment)
+router.get("/paystack/callback", authMiddleware, getReference)
 
 export default router;

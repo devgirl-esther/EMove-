@@ -26,10 +26,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRoute = exports.getAllRoutes = exports.resetPassword = exports.forgotPassword = exports.changePassword = exports.login = exports.verifyEmail = exports.register = void 0;
+exports.getReference = exports.initPayment = exports.getRoute = exports.getAllRoutes = exports.resetPassword = exports.forgotPassword = exports.changePassword = exports.login = exports.verifyEmail = exports.register = void 0;
 const userModel_1 = __importDefault(require("../model/userModel"));
 const tokenModel_1 = __importDefault(require("../model/tokenModel"));
-const route_1 = __importDefault(require("../model/route"));
+const routeModel_1 = __importDefault(require("../model/routeModel"));
 const passwordHashing_1 = require("../utils/passwordHashing");
 const email_config_1 = require("../utils/email.config");
 const crypto_1 = __importDefault(require("crypto"));
@@ -38,6 +38,10 @@ const token_1 = require("../utils/token");
 const passwordHashing_2 = require("../utils/passwordHashing");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jwt = __importStar(require("jsonwebtoken"));
+const paystack_1 = require("../utils/paystack");
+const donorModel_1 = __importDefault(require("../model/donorModel"));
+const lodash_1 = __importDefault(require("lodash"));
+const transactionModel_1 = __importDefault(require("../model/transactionModel"));
 const register = async (req, res, next) => {
     const userData = req.body;
     try {
@@ -254,7 +258,7 @@ const resetPassword = async (req, res, next) => {
 exports.resetPassword = resetPassword;
 const getAllRoutes = async (req, res, next) => {
     try {
-        const routes = await route_1.default.find();
+        const routes = await routeModel_1.default.find();
         res.send(routes);
     }
     catch (error) {
@@ -265,7 +269,7 @@ const getAllRoutes = async (req, res, next) => {
 exports.getAllRoutes = getAllRoutes;
 const getRoute = async (req, res, next) => {
     try {
-        const route = await route_1.default.findById(req.params.id);
+        const route = await routeModel_1.default.findById(req.params.id);
         res.send(route);
     }
     catch (error) {
@@ -274,3 +278,82 @@ const getRoute = async (req, res, next) => {
     }
 };
 exports.getRoute = getRoute;
+const initPayment = async (req, res, next) => {
+    try {
+        const { userId, amount } = req.body;
+        const user = await userModel_1.default.findById(userId);
+        if (!user) {
+            return res.send('Invalid user');
+        }
+        const form = {};
+        form.name = user.name;
+        form.email = user.email;
+        form.metadata = {
+            full_name: user.name,
+        };
+        form.amount = amount * 100;
+        (0, paystack_1.initializePayment)(form, async (error, body) => {
+            if (error) {
+                return res.send('payment error occurred');
+            }
+            const response = JSON.parse(body);
+            const newTransaction = {
+                userId: req.userId,
+                status: 'Credit',
+                amount: form.amount,
+            };
+            const transaction = new transactionModel_1.default(newTransaction);
+            await transaction.save();
+            return res.send({
+                authorization_url: response.data.authorization_url,
+                transaction,
+            });
+        });
+    }
+    catch (error) { }
+};
+exports.initPayment = initPayment;
+const getReference = async (req, res, next) => {
+    try {
+        const userId = req.userId;
+        const transactionId = req.query.transId;
+        const transaction = await transactionModel_1.default.findOne({
+            userId,
+            _id: transactionId,
+        });
+        if (transaction?.verified === true) {
+            return res.send(`This ${transaction?.status} transaction has already been verified`);
+        }
+        const ref = req.query.reference;
+        (0, paystack_1.verifyPayment)(ref, async (error, body) => {
+            if (error) {
+                console.log(error);
+                return res.send(error);
+            }
+            const response = JSON.parse(body);
+            const data = lodash_1.default.at(response.data, [
+                'reference',
+                'amount',
+                'customer.email',
+                'metadata.full_name',
+            ]);
+            //I can say for a fact that meeting you is a blessing!
+            const [reference, amount, email, name] = data;
+            const newDonor = { reference, amount, email, name };
+            const donor = new donorModel_1.default(newDonor);
+            await donor.save();
+            const user = await userModel_1.default.findOne({ email: donor.email });
+            await userModel_1.default.updateOne({ _id: user?._id }, { $inc: { walletBalance: donor.amount / 100 } });
+            const updatedTransaction = await transactionModel_1.default.findByIdAndUpdate({ _id: transactionId }, { verified: true }, { new: true });
+            return res.send({
+                message: "payment successfully verified",
+                donor,
+                transaction: updatedTransaction,
+            });
+        });
+    }
+    catch (error) {
+        return res.send("Something isn't right");
+    }
+};
+exports.getReference = getReference;

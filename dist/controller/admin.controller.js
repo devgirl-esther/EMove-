@@ -26,15 +26,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+
 exports.bookTrip = exports.updateRoutePrice = exports.createRoute = exports.getRoute = exports.getAllRoutes = exports.totalDrivers = exports.getAllPassengers = exports.deleteDriver = exports.getOneDriver = exports.getAllDrivers = exports.updateDriver = exports.registerDriver = void 0;
 const driverModel_1 = __importDefault(require("../model/driverModel"));
 const userModel_1 = __importDefault(require("../model/userModel"));
 const jwt = __importStar(require("jsonwebtoken"));
 const tripModel_1 = __importDefault(require("../model/tripModel"));
+
+exports.updateRoutePrice = exports.createRoute = exports.getRoute = exports.getAllRoutes = exports.totalDrivers = exports.getAllPassengers = exports.deleteDriver = exports.getOneDriver = exports.getAllDrivers = exports.updateDriver = exports.registerDriver = void 0;
+
 const routeModel_1 = __importDefault(require("../model/routeModel"));
 const joiValidator_1 = require("../utils/joiValidator");
 const registerDriver = async (req, res, next) => {
-    console.log('controller');
     try {
         const isDriverExist = await driverModel_1.default.findOne({
             fullName: req.body.fullName,
@@ -45,10 +48,13 @@ const registerDriver = async (req, res, next) => {
         console.log(req.body);
         const { fullName, operationRoute, phone, accountNo } = req.body;
         const body = req.files;
-        console.log(body);
+        const route = await routeModel_1.default.findById(operationRoute);
+        if (!route) {
+            return res.send("Invalid route Id");
+        }
         const newDriverData = new driverModel_1.default({
             fullName,
-            operationRoute,
+            operationRoute: `${route.pickup} - ${route.destination}`,
             phone,
             accountNo,
             driverId: body.driverId[0].path,

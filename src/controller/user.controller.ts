@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
 import User from '../model/userModel';
 import Token from '../model/tokenModel';
+
 import Route from '../model/routeModel'
+
 import { toHash } from '../utils/passwordHashing';
 import { sendEmail } from '../utils/email.config';
 import crypto from 'crypto';
@@ -10,7 +12,10 @@ import { getToken, loginToken } from '../utils/token';
 import { compare } from '../utils/passwordHashing';
 import bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
-
+import { initializePayment, verifyPayment } from '../utils/paystack';
+import Donor from '../model/donorModel';
+import _ from 'lodash';
+import Transaction from '../model/transactionModel';
 
 export const register = async (
     req: Request,
@@ -293,5 +298,128 @@ export const getRoute = async (
     } catch (error) {
         res.send('An error occured');
         console.log(error);
+    }
+};
+
+export const initPayment = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const { userId, amount } = req.body;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.send('Invalid user');
+        }
+        const form: any = {};
+        form.name = user.name;
+        form.email = user.email;
+        form.metadata = {
+            full_name: user.name,
+        };
+        form.amount = amount * 100;
+
+        initializePayment(form, async (error: any, body: any) => {
+            if (error) {
+                return res.send('payment error occurred');
+            }
+
+            const response = JSON.parse(body);
+
+            const newTransaction = {
+                userId: req.userId,
+                transactionType: 'Credit',
+                amount: form.amount,
+            };
+            const transaction = new Transaction(newTransaction);
+            await transaction.save();
+            return res.send({
+                authorization_url: response.data.authorization_url,
+                transaction,
+            });
+        });
+    } catch (error) {}
+};
+
+export const getReference = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const userId = req.userId;
+        const transactionId = req.query.transId;
+        const transaction = await Transaction.findOne({
+            userId,
+            _id: transactionId,
+        });
+        if (transaction?.processed === true) {
+            return res.send(
+                `This ${transaction?.status} transaction has already been verified`
+            );
+        }
+        const ref: string = req.query.reference as string;
+        verifyPayment(ref, async (error: any, body: any) => {
+            if (error) {
+                console.log(error);
+                return res.send(error);
+            }
+
+            const response = JSON.parse(body);
+
+            const data = _.at(response.data, [
+                'reference',
+                'amount',
+                'customer.email',
+                'metadata.full_name',
+                'status',
+            ]);
+
+            //I can say for a fact that meeting you is a blessing!
+
+            const [reference, amount, email, name, status] = data;
+
+            const newDonor = { reference, amount, email, name };
+
+            const donor = new Donor(newDonor);
+            await donor.save();
+
+            const user = await User.findOne({ email: donor.email });
+
+            if (status === 'success') {
+                await User.updateOne(
+                    { _id: user?._id },
+                    { $inc: { walletBalance: donor.amount / 100 } }
+                );
+
+                const updatedTransaction = await Transaction.findByIdAndUpdate(
+                    { _id: transactionId },
+                    { processed: true, status: 'accepted' },
+                    { new: true }
+                );
+
+                return res.send({
+                    message: 'Transaction accepted',
+                    donor,
+                    transaction: updatedTransaction,
+                });
+            } else {
+                const updatedTransaction = await Transaction.findByIdAndUpdate(
+                    { _id: transactionId },
+                    { processed: true, status: 'declined' },
+                    { new: true }
+                );
+
+                return res.send({
+                    message: 'Transaction declined',
+                    donor,
+                    transaction: updatedTransaction,
+                });
+            }
+        });
+    } catch (error) {
+        return res.send("Something isn't right");
     }
 };

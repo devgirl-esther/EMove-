@@ -18,6 +18,7 @@ const UserSchema = new Schema({
             message: 'Please enter a valid email',
         },
     },
+    walletBalance: { type: Number, default: 0 },
     password: { type: String, required: true },
     verified: {
         type: Boolean,

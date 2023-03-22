@@ -25,7 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authMiddleware = void 0;
 const jwt = __importStar(require("jsonwebtoken"));
-const secret = process.env.JWTSECRET;
+const secret = process.env.JWTLOGINSECRET;
 const authMiddleware = async (req, res, next) => {
     const { authorization } = req.headers;
     if (!authorization) {
@@ -38,7 +38,8 @@ const authMiddleware = async (req, res, next) => {
     try {
         // Decode the JWT and extract the user ID
         const decoded = jwt.verify(token, secret);
-        const userId = decoded.id;
+        const userId = decoded._id;
+        console.log("userId", userId);
         if (!userId) {
             return res.status(400).json({ error: 'Invalid Token' });
         }

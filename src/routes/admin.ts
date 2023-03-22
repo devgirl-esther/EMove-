@@ -13,9 +13,15 @@ import {
 import { upload } from '../utils/multer';
 import { totalDrivers, getAllPassengers } from '../controller/admin.controller';
 
+
 //import { registerDriver, updateDriver, getAllRoutes, getRoute} from '../controller/admin.controller';
 
-import { createRoute, updateRoutePrice } from '../controller/admin.controller';
+import {getAllRoutes, getRoute} from '../controller/admin.controller';
+
+import { createRoute, updateRoutePrice } from "../controller/admin.controller";
+
+
+
 
 const router = express.Router();
 

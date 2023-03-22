@@ -2,8 +2,10 @@ import express, { Request, Response, NextFunction } from 'express';
 import Driver from '../model/driverModel';
 
 import User from '../model/userModel';
+
 import * as jwt from 'jsonwebtoken';
 import Trip from '../model/tripModel';
+
 import Route from '../model/routeModel';
 import { validateRoute, validateRoutePrice } from '../utils/joiValidator';
 
@@ -12,7 +14,6 @@ export const registerDriver = async (
     res: Response,
     next: NextFunction
 ) => {
-    console.log('controller');
     try {
         const isDriverExist = await Driver.findOne({
             fullName: req.body.fullName,
@@ -24,11 +25,13 @@ export const registerDriver = async (
         const { fullName, operationRoute, phone, accountNo } = req.body;
         const body: any = req.files;
 
-        console.log(body);
-
+        const route = await Route.findById(operationRoute)
+        if(!route) {
+          return res.send("Invalid route Id")
+        }
         const newDriverData = new Driver({
             fullName,
-            operationRoute,
+            operationRoute: `${route.pickup} - ${route.destination}`,
             phone,
             accountNo,
             driverId: body.driverId[0].path,

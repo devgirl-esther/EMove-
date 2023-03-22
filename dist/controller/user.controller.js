@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getReference = exports.initPayment = exports.getRoute = exports.getAllRoutes = exports.resetPassword = exports.forgotPassword = exports.changePassword = exports.login = exports.verifyEmail = exports.register = void 0;
+exports.getTransaction = exports.getReference = exports.initPayment = exports.getRoute = exports.getAllRoutes = exports.resetPassword = exports.forgotPassword = exports.changePassword = exports.login = exports.verifyEmail = exports.register = void 0;
 const userModel_1 = __importDefault(require("../model/userModel"));
 const tokenModel_1 = __importDefault(require("../model/tokenModel"));
 const routeModel_1 = __importDefault(require("../model/routeModel"));
@@ -368,3 +368,18 @@ const getReference = async (req, res, next) => {
     }
 };
 exports.getReference = getReference;
+const getTransaction = async (req, res, next) => {
+    try {
+        const transaction = await transactionModel_1.default.find({
+            userId: req.params.userId,
+        });
+        res.send(transaction);
+    }
+    catch (error) {
+        res.send({
+            status: 'An error occured',
+            message: 'Data not found',
+        });
+    }
+};
+exports.getTransaction = getTransaction;

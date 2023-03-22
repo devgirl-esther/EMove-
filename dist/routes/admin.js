@@ -7,12 +7,9 @@ const express_1 = __importDefault(require("express"));
 const admin_controller_1 = require("../controller/admin.controller");
 const multer_1 = require("../utils/multer");
 const admin_controller_2 = require("../controller/admin.controller");
-
 //import { registerDriver, updateDriver, getAllRoutes, getRoute} from '../controller/admin.controller';
+// import {getAllRoutes, getRoute} from '../controller/admin.controller';
 const admin_controller_3 = require("../controller/admin.controller");
-
-const admin_controller_4 = require("../controller/admin.controller");
-
 const router = express_1.default.Router();
 router.post('/register-driver', multer_1.upload.fields([
     { name: 'driverId', maxCount: 1 },
@@ -33,5 +30,4 @@ router.get('/getRoute/:id', admin_controller_1.getRoute);
 router.post('/createRoute', admin_controller_3.createRoute);
 router.patch('/editRoute/:id', admin_controller_3.updateRoutePrice);
 router.post('/booktrip/:routeId', admin_controller_1.bookTrip);
-
 exports.default = router;

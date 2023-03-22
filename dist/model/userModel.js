@@ -18,7 +18,6 @@ const UserSchema = new Schema({
             message: 'Please enter a valid email',
         },
     },
-    walletBalance: { type: Number, default: 0 },
     password: { type: String, required: true },
     verified: {
         type: Boolean,
@@ -32,8 +31,26 @@ const UserSchema = new Schema({
         type: Number,
         required: true,
     },
-}, {
-    timestamps: true,
+    message: "Please enter a valid email",
 });
+walletBalance: {
+    type: Number, ;
+    0;
+}
+password: {
+    type: String, required;
+    true;
+}
+verified: {
+    type: Boolean,
+    ;
+    false,
+    ;
+}
+{
+    timestamps: true,
+    ;
+}
+;
 const User = mongoose_1.default.model('user', UserSchema);
 exports.default = User;

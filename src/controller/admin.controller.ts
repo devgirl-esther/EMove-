@@ -333,3 +333,51 @@ export const bookTrip = async (req: Request, res: Response) => {
         res.status(400).json({ error: 'Invalid token' });
     }
 };
+
+export const tripHistory = async(req: Request, res: Response) => {
+    try {
+        const result = await Trip.find({});
+        if (result) {
+            res.status(200).json({data: result})
+        }
+    } catch (err:any) {
+        res.status(400).json({message: "Internal server error", error:err.message})
+    }
+}
+
+
+export const tripHistoryByPassenger = async (req: Request, res: Response) => {
+    const { authorization } = req.headers;
+    if (!authorization) {
+        return res
+            .status(401)
+            .json({ error: 'You must be logged in to book a trip' });
+    }
+
+    // Get the JWT token from the authorization header
+    const token = authorization.split(' ')[1];
+    const secret: string = process.env.JWTSECRET as string;
+
+    try {
+         const decoded: { _id: string } = (await jwt.verify(token, secret)) as {
+            _id: string;
+        };
+        console.log('decoded', decoded);
+        if (!decoded) {
+            return res.status(400).json({ error: 'Invalid token' });
+        }
+        const userId = decoded._id;
+        const user = await User.findOne({ _id: userId });
+        if (user) {
+          const {name} = user
+            const tripsByUser = await Trip.find({ name })
+            if (tripsByUser) {
+                res.status(200).json({status:"success", data: tripsByUser})
+            } else {
+                res.status(404).json({status:"failed", message: "No trips created by user"})
+            }
+        }
+    } catch (err:any) {
+        res.status(400).json({message: "Internal server error", error:err.message})
+    }
+}

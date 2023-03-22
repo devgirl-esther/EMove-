@@ -17,7 +17,11 @@ router.post('/resetPassword/:userId/:token', user_controller_1.resetPassword);
 router.get('/getAllRoutes', user_controller_1.getAllRoutes);
 router.get('/getRoute/:id', user_controller_1.getRoute);
 //router.post('/book-trip/:routeId', bookTrip);
+
 router.post("/paystack/pay", auth_1.authMiddleware, user_controller_1.initPayment);
 router.get("/paystack/callback", auth_1.authMiddleware, user_controller_1.getReference);
 router.get('/tripHistoryByPassenger', auth_1.authMiddleware, admin_controller_1.tripHistoryByPassenger);
+
+router.get('/transaction/:userId', user_controller_1.getTransaction);
+
 exports.default = router;

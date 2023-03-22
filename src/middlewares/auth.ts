@@ -1,6 +1,6 @@
 import { Application, Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
-const secret: string = process.env.JWTSECRET as string;
+const secret: string = process.env.JWTLOGINSECRET as string;
 
 declare module 'express-serve-static-core' {
     interface Request {
@@ -24,10 +24,11 @@ export const authMiddleware = async (
     const token = authorization.split(' ')[1];
     try {
         // Decode the JWT and extract the user ID
-        const decoded: { id: string } = jwt.verify(token, secret) as {
-            id: string;
+        const decoded: { _id: string } = jwt.verify(token, secret) as {
+            _id: string;
         };
-        const userId = decoded.id;
+        const userId = decoded._id;
+        console.log("userId", userId);
         if (!userId) {
             return res.status(400).json({ error: 'Invalid Token' });
         }

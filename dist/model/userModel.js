@@ -15,7 +15,7 @@ const UserSchema = new Schema({
             validator: function (v) {
                 return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
             },
-            message: "Please enter a valid email",
+            message: 'Please enter a valid email',
         },
     },
     walletBalance: { type: Number, default: 0 },
@@ -27,9 +27,13 @@ const UserSchema = new Schema({
     phone: { type: Number, required: true },
     userType: { type: String, required: true },
     gender: { type: String, required: true },
-    DOB: { type: String, required: true }
+    DOB: { type: String, required: true },
+    walletBalance: {
+        type: Number,
+        required: true,
+    },
 }, {
     timestamps: true,
 });
-const User = mongoose_1.default.model("user", UserSchema);
+const User = mongoose_1.default.model('user', UserSchema);
 exports.default = User;

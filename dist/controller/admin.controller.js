@@ -1,35 +1,11 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bookTrip = exports.updateRoutePrice = exports.createRoute = exports.getRoute = exports.getAllRoutes = exports.totalDrivers = exports.getAllPassengers = exports.deleteDriver = exports.getOneDriver = exports.getAllDrivers = exports.updateDriver = exports.registerDriver = void 0;
+exports.tripHistoryByPassenger = exports.tripHistory = exports.bookTrip = exports.updateRoutePrice = exports.createRoute = exports.getRoute = exports.getAllRoutes = exports.totalDrivers = exports.getAllPassengers = exports.deleteDriver = exports.getOneDriver = exports.getAllDrivers = exports.updateDriver = exports.registerDriver = void 0;
 const driverModel_1 = __importDefault(require("../model/driverModel"));
 const userModel_1 = __importDefault(require("../model/userModel"));
-const jwt = __importStar(require("jsonwebtoken"));
 const tripModel_1 = __importDefault(require("../model/tripModel"));
 const routeModel_1 = __importDefault(require("../model/routeModel"));
 const joiValidator_1 = require("../utils/joiValidator");
@@ -264,24 +240,9 @@ const updateRoutePrice = async (req, res) => {
 };
 exports.updateRoutePrice = updateRoutePrice;
 const bookTrip = async (req, res) => {
-    const { authorization } = req.headers;
-    if (!authorization) {
-        return res
-            .status(401)
-            .json({ error: 'You must be logged in to book a trip' });
-    }
-    // Get the JWT token from the authorization header
-    const token = authorization.split(' ')[1];
-    const secret = process.env.JWTSECRET;
     // Decode the JWT and extract the user ID
     try {
-        const decoded = (await jwt.verify(token, secret));
-        console.log('decoded', decoded);
-        if (!decoded) {
-            return res.status(400).json({ error: 'Invalid token' });
-        }
-        const userId = decoded._id;
-        console.log('userId', userId);
+        const userId = req.userId;
         const routeId = req.params.routeId;
         try {
             const route = await routeModel_1.default.findById({ _id: routeId });
@@ -304,11 +265,12 @@ const bookTrip = async (req, res) => {
                         passenger: user.name,
                     });
                     await newTrip.save();
-                    user.walletBalance = user.walletBalance - price;
-                    await user.save();
+                    const newBallance = user.walletBalance - price;
+                    console.log(newBallance);
+                    await userModel_1.default.findByIdAndUpdate(userId, { walletBalance: newBallance });
                     return res
                         .status(200)
-                        .json({ message: 'book successfull' });
+                        .json({ message: 'book successfull', trip: newTrip });
                 }
             }
         }
@@ -321,3 +283,36 @@ const bookTrip = async (req, res) => {
     }
 };
 exports.bookTrip = bookTrip;
+const tripHistory = async (req, res) => {
+    try {
+        const result = await tripModel_1.default.find({});
+        if (result) {
+            res.status(200).json({ data: result });
+        }
+    }
+    catch (err) {
+        res.status(400).json({ message: "Internal server error", error: err.message });
+    }
+};
+exports.tripHistory = tripHistory;
+const tripHistoryByPassenger = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const user = await userModel_1.default.findById({ _id: userId });
+        if (user) {
+            const { name } = user;
+            const tripsByUser = await tripModel_1.default.find({ passenger: name });
+            console.log(tripsByUser);
+            if (tripsByUser) {
+                res.status(200).json({ status: "success", data: tripsByUser });
+            }
+            else {
+                res.status(404).json({ status: "failed", message: "No trips created by user" });
+            }
+        }
+    }
+    catch (err) {
+        res.status(400).json({ message: "Internal server error", error: err.message });
+    }
+};
+exports.tripHistoryByPassenger = tripHistoryByPassenger;

@@ -15,7 +15,6 @@ const UserSchema = new Schema({
             validator: function (v) {
                 return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
             },
-            message: 'Please enter a valid email',
         },
     },
     password: { type: String, required: true },
@@ -31,26 +30,8 @@ const UserSchema = new Schema({
         type: Number,
         required: true,
     },
-    message: "Please enter a valid email",
-});
-walletBalance: {
-    type: Number, ;
-    0;
-}
-password: {
-    type: String, required;
-    true;
-}
-verified: {
-    type: Boolean,
-    ;
-    false,
-    ;
-}
-{
+}, {
     timestamps: true,
-    ;
-}
-;
+});
 const User = mongoose_1.default.model('user', UserSchema);
 exports.default = User;

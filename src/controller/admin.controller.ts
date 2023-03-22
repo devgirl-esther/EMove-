@@ -272,28 +272,12 @@ export const updateRoutePrice = async (req: Request, res: Response) => {
 };
 
 export const bookTrip = async (req: Request, res: Response) => {
-    const { authorization } = req.headers;
-    if (!authorization) {
-        return res
-            .status(401)
-            .json({ error: 'You must be logged in to book a trip' });
-    }
-
-    // Get the JWT token from the authorization header
-    const token = authorization.split(' ')[1];
-    const secret: string = process.env.JWTSECRET as string;
-
+ 
     // Decode the JWT and extract the user ID
     try {
-        const decoded: { _id: string } = (await jwt.verify(token, secret)) as {
-            _id: string;
-        };
-        console.log('decoded', decoded);
-        if (!decoded) {
-            return res.status(400).json({ error: 'Invalid token' });
-        }
-        const userId = decoded._id;
-        console.log('userId', userId);
+        
+        const userId = req.userId;
+
         const routeId = req.params.routeId;
 
         try {
@@ -319,11 +303,12 @@ export const bookTrip = async (req: Request, res: Response) => {
                         passenger: user.name,
                     });
                     await newTrip.save();
-                    user.walletBalance = user.walletBalance - price;
-                    await user.save();
+                    const newBallance = user.walletBalance - price
+                    console.log(newBallance)
+                    await User.findByIdAndUpdate(userId, {walletBalance: newBallance});
                     return res
                         .status(200)
-                        .json({ message: 'book successfull' });
+                        .json({ message: 'book successfull', trip: newTrip });
                 }
             }
         } catch (error) {
@@ -347,30 +332,14 @@ export const tripHistory = async(req: Request, res: Response) => {
 
 
 export const tripHistoryByPassenger = async (req: Request, res: Response) => {
-    const { authorization } = req.headers;
-    if (!authorization) {
-        return res
-            .status(401)
-            .json({ error: 'You must be logged in to book a trip' });
-    }
-
-    // Get the JWT token from the authorization header
-    const token = authorization.split(' ')[1];
-    const secret: string = process.env.JWTSECRET as string;
-
+ 
     try {
-         const decoded: { _id: string } = (await jwt.verify(token, secret)) as {
-            _id: string;
-        };
-        console.log('decoded', decoded);
-        if (!decoded) {
-            return res.status(400).json({ error: 'Invalid token' });
-        }
-        const userId = decoded._id;
-        const user = await User.findOne({ _id: userId });
+        const userId = req.userId;
+        const user = await User.findById({ _id: userId });
         if (user) {
           const {name} = user
-            const tripsByUser = await Trip.find({ name })
+            const tripsByUser = await Trip.find({ passenger: name })
+            console.log(tripsByUser)
             if (tripsByUser) {
                 res.status(200).json({status:"success", data: tripsByUser})
             } else {

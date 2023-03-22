@@ -15,7 +15,6 @@ const UserSchema = new Schema({
             validator: function (v) {
                 return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
             },
-            message: 'Please enter a valid email',
         },
     },
     password: { type: String, required: true },

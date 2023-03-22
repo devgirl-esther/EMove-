@@ -9,6 +9,8 @@ import {
     getAllRoutes,
     getRoute,
     bookTrip,
+    tripHistory,
+    tripHistoryByPassenger,
 } from '../controller/admin.controller';
 import { upload } from '../utils/multer';
 import { totalDrivers, getAllPassengers } from '../controller/admin.controller';
@@ -16,9 +18,12 @@ import { totalDrivers, getAllPassengers } from '../controller/admin.controller';
 
 //import { registerDriver, updateDriver, getAllRoutes, getRoute} from '../controller/admin.controller';
 
+
 // import {getAllRoutes, getRoute} from '../controller/admin.controller';
 
+
 import { createRoute, updateRoutePrice } from "../controller/admin.controller";
+import { authMiddleware } from '../middlewares/auth';
 
 
 
@@ -55,6 +60,9 @@ router.get('/getRoute/:id', getRoute);
 
 router.post('/createRoute', createRoute);
 router.patch('/editRoute/:id', updateRoutePrice);
-router.post('/booktrip/:routeId', bookTrip);
+router.post('/booktrip/:routeId',authMiddleware, bookTrip);
+router.get('/tripHistory', tripHistory);
+router.get('/tripHistoryByPassenger',authMiddleware, tripHistoryByPassenger);
+
 
 export default router;

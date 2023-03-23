@@ -321,6 +321,7 @@ export const bookTrip = async (req: Request, res: Response) => {
                     await newTrip.save();
                     user.walletBalance = user.walletBalance - price;
                     await user.save();
+                    
                     return res
                         .status(200)
                         .json({ message: 'book successfull' });

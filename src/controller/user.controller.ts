@@ -307,7 +307,8 @@ export const initPayment = async (
     next: NextFunction
 ) => {
     try {
-        const { userId, amount } = req.body;
+        const { amount } = req.body;
+        const userId  = req.userId
 
         const user = await User.findById(userId);
         if (!user) {

@@ -20,12 +20,12 @@ const UserSchema = new Schema(
       default: false,
     },
     phone: { type: Number, required: true },
-    userType: { type: String, required: true },
+    isAdmin: {type: Boolean, default: false},
     gender: { type: String, required: true },
     DOB: { type: String, required: true },
     walletBalance: {
       type: Number,
-      required: true,
+      default: 0,
     },
   },
   {

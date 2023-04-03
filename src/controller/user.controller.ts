@@ -449,3 +449,21 @@ export const getReference = async (
     return res.send("Something isn't right");
   }
 };
+
+export const getTransaction = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const transaction = await Transaction.find({
+      userId: req.params.userId,
+    });
+    res.send(transaction);
+  } catch (error) {
+    res.send({
+      status: 'An error occured',
+      message: 'Data not found',
+    });
+  }
+};

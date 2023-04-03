@@ -11,7 +11,6 @@ const UserSchema = new Schema(
         validator: function (v: any) {
           return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
         },
-        message: 'Please enter a valid email',
       },
     },
     password: { type: String, required: true },
@@ -20,7 +19,7 @@ const UserSchema = new Schema(
       default: false,
     },
     phone: { type: Number, required: true },
-    isAdmin: {type: Boolean, default: false},
+    isAdmin: { type: Boolean, default: false },
     gender: { type: String, required: true },
     DOB: { type: String, required: true },
     walletBalance: {

@@ -1,27 +1,59 @@
-const Joi = require('joi');
+import Joi from 'joi';
+
+export const userSchema = Joi.object({
+  name: Joi.string()
+    .required()
+    .messages({ 'any.required': 'Name is required' }),
+  email: Joi.string()
+    .email()
+    .required()
+    .messages({ 'any.required': 'Email is required' }),
+  password: Joi.string()
+    .required()
+    .messages({ 'any.required': 'Password is required' })
+    .min(8),
+  phone: Joi.number()
+    .required()
+    .messages({ 'any.required': 'Phone is required' }),
+  userType: Joi.string(),
+  gender: Joi.string()
+    .required()
+    .messages({ 'any.required': 'Gender is required' }),
+  DOB: Joi.string().required().messages({ 'any.required': 'DOB is required' }),
+});
+
+export const loginSchema = Joi.object({
+  email: Joi.string()
+    .email()
+    .required()
+    .messages({ 'any.required': 'Email is required' }),
+    password: Joi.string()
+    .required()
+    .messages({ 'any.required': 'Password is required' })
+    .min(8)
+})
 
 // Define a Joi schema for the route
 const routeSchema = Joi.object({
-    pickup: Joi.string().required(),
-    destination: Joi.string().required(),
-     price: Joi.number().required().min(0)
+  pickup: Joi.string().required(),
+  destination: Joi.string().required(),
+  price: Joi.number().required().min(0),
 });
 
 const routePriceSchema = Joi.object({
-     price: Joi.number().required().min(0)
+  price: Joi.number().required().min(0),
 });
 
-
-interface Route{
-    pickup: string,
-    destination: string
-    price: number
+interface Route {
+  pickup: string;
+  destination: string;
+  price: number;
 }
-interface Price{
-    price: number
+interface Price {
+  price: number;
 }
 // Validate a route object against the schema
-export function validateRoute(route:Route) {
+export function validateRoute(route: Route) {
   return routeSchema.validate(route);
 }
 

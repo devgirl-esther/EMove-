@@ -1,9 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import User from '../model/userModel';
 import Token from '../model/tokenModel';
-
 import Route from '../model/routeModel';
-
 import { toHash } from '../utils/passwordHashing';
 import { sendEmail } from '../utils/email.config';
 import crypto from 'crypto';

@@ -1,9 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import User from '../model/userModel';
 import Token from '../model/tokenModel';
-
 import Route from '../model/routeModel';
-
 import { toHash } from '../utils/passwordHashing';
 import { sendEmail } from '../utils/email.config';
 import crypto from 'crypto';
@@ -289,7 +287,7 @@ export const resetPassword = async (
     });
     if (!token) return res.status(400).send('Invalid link or expired');
 
-    user.password = req.body.password;
+    user.password = await toHash(req.body.password);
     await user.save();
     await token.delete();
 

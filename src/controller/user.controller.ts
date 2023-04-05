@@ -289,7 +289,7 @@ export const resetPassword = async (
     });
     if (!token) return res.status(400).send('Invalid link or expired');
 
-    user.password = req.body.password;
+    user.password = await toHash(req.body.password);
     await user.save();
     await token.delete();
 

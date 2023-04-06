@@ -1,5 +1,5 @@
 import express from 'express';
-import { tripHistoryByPassenger } from '../controller/user.controller';
+import { bookTrip, tripHistoryByPassenger } from '../controller/user.controller';
 import {
   forgotPassword,
   login,
@@ -26,11 +26,9 @@ router.get('/getAllRoutes', getAllRoutes);
 router.get('/getRoute/:id', getRoute);
 
 router.post("/paystack/pay", authMiddleware, initPayment)
-router.get("/paystack/callback", authMiddleware, getReference)
+router.get("/paystack/callback", getReference)
 router.get('/tripHistoryByPassenger',authMiddleware, tripHistoryByPassenger);
-
+router.post('/booktrip/:routeId',authMiddleware, bookTrip);
 router.get('/transaction/:userId', getTransaction);
-
-
 
 export default router;

@@ -21,7 +21,6 @@ export const registerDriver = async (
     if (isDriverExist) {
       return res.send('Driver with this name already exists');
     }
-    console.log(req.body);
     const { fullName, operationRoute, phone, accountNo } = req.body;
     const body: any = req.files;
 
@@ -59,7 +58,6 @@ export const updateDriver = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log('update');
   try {
     const driverId = req.params.id;
     const updatedDriver = await Driver.findByIdAndUpdate(driverId, req.body, {
@@ -84,7 +82,6 @@ export const getAllDrivers = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log('get');
   try {
     const driver = req.params;
     const allDrivers = await Driver.find(driver, req.body, { new: true });
@@ -130,7 +127,6 @@ export const deleteDriver = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log('get');
   try {
     const driverId = req.params.id;
     const oneDriver = await Driver.findByIdAndDelete(driverId, req.body);
@@ -174,12 +170,8 @@ export const totalDrivers = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log('get');
   try {
-    const drivers = req.params;
-    const totalDrivers = await Driver.find(drivers, req.body, {
-      new: true,
-    });
+    const totalDrivers = await Driver.find({});
     return res.status(200).send({
       status: 'success',
       message: 'successful',
@@ -193,37 +185,13 @@ export const totalDrivers = async (
   }
 };
 
-export const getAllRoutes = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const routes = await Route.find();
-    res.send(routes);
-  } catch (error) {
-    res.send('An error occured');
-    console.log(error);
-  }
-};
-
-export const getRoute = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const route = await Route.findById(req.params.id);
-    res.send(route);
-  } catch (error) {
-    res.send('An error occured');
-    console.log(error);
-  }
-};
-
 export const createRoute = async (req: Request, res: Response) => {
   const { pickup, destination, price } = req.body;
   try {
+    const route = await Route.findOne({pickup, destination})
+    if (route) {
+      return res.send({message: "Route already exists"})
+    }
     const { error } = validateRoute({ pickup, destination, price });
     if (error) throw new Error(error.details[0].message);
   } catch (err: any) {
@@ -270,48 +238,7 @@ export const updateRoutePrice = async (req: Request, res: Response) => {
   }
 };
 
-export const bookTrip = async (req: Request, res: Response) => {
-  // Decode the JWT and extract the user ID
-  try {
-    const userId = req.userId;
 
-    const routeId = req.params.routeId;
-
-    try {
-      const route = await Route.findById({ _id: routeId });
-      console.log(route);
-      if (route) {
-        const { pickup, destination, price } = route;
-
-        const user = await User.findById({ _id: userId });
-        console.log(user);
-        if (user) {
-          // if user wallet ballance is less thab trip price return errrror
-          if (user.walletBalance < price) {
-            return res.status(400).json({ message: 'Insufficient fund' });
-          }
-
-          const newTrip = new Trip({
-            pickup: pickup,
-            destination: destination,
-            price: price,
-            passenger: user.name,
-          });
-          await newTrip.save();
-          const newBallance = user.walletBalance - price;
-          await User.findByIdAndUpdate(userId, { walletBalance: newBallance });
-          return res
-            .status(200)
-            .json({ message: 'book successfull', trip: newTrip });
-        }
-      }
-    } catch (error) {
-      return res.status(500).json({ error: 'Route not found' });
-    }
-  } catch (err) {
-    res.status(400).json({ error: 'Invalid token' });
-  }
-};
 
 export const tripHistory = async (req: Request, res: Response) => {
   try {

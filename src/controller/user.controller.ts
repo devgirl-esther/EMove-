@@ -77,7 +77,6 @@ export const register = async (
       token: token.token,
     });
   } catch (error) {
-    // console.log(error);
     return res.status(500).send({
       status: 'error',
     });
@@ -162,9 +161,13 @@ export const login = async (
 
     const token = loginToken(user._id.toString());
 
+    const { name, phone, walletBalance, createdAt } = user;
     res.status(200).send({
       message: 'login successful',
-      user,
+      name,
+      phone,
+      walletBalance,
+      createdAt,
       loginToken: token,
     });
   } catch (error) {
@@ -247,7 +250,9 @@ export const forgotPassword = async (
 
     const user = await User.findOne({ email: req.body.email });
     if (!user)
-      return res.status(400).send("user with given email doesn't exist");
+      return res
+        .status(400)
+        .send({ message: "user with given email doesn't exist" });
 
     let token = await Token.findOne({ userId: user._id });
     if (!token) {
@@ -256,12 +261,14 @@ export const forgotPassword = async (
         token: crypto.randomBytes(32).toString('hex'),
       }).save();
     }
-    const BASE_URL = process.env.BASE_URL || 'http://localhost:8081/api/v1'
+    const BASE_URL = process.env.BASE_URL || 'http://localhost:8081';
     const link = `${BASE_URL}/api/v1/users/password-reset/${user._id}/${token.token}`;
     await sendEmail(user.email, 'Password reset', link);
     //send password reset link to email
 
-    res.send('password reset link sent to your email account');
+    return res.send({
+      message: 'password reset link sent to your email account',
+    });
   } catch (error) {
     res.send('An error occured');
     console.log(error);
@@ -279,19 +286,21 @@ export const resetPassword = async (
     if (error) return res.status(400).send(error.details[0].message);
 
     const user = await User.findById(req.params.userId);
-    if (!user) return res.status(400).send('invalid link or expired');
+    if (!user)
+      return res.status(400).send({ message: 'invalid link or expired' });
 
     const token = await Token.findOne({
       userId: user._id,
       token: req.params.token,
     });
-    if (!token) return res.status(400).send('Invalid link or expired');
+    if (!token)
+      return res.status(400).send({ message: 'Invalid link or expired' });
 
     user.password = await toHash(req.body.password);
     await user.save();
     await token.delete();
 
-    res.send('password reset sucessfully.');
+    res.send({ message: 'password reset sucessfully.' });
   } catch (error) {
     res.send('An error occured');
     console.log(error);
@@ -337,7 +346,7 @@ export const initPayment = async (
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.send('Invalid user');
+      return res.send({ message: 'Invalid user' });
     }
     const form: any = {};
     form.name = user.name;
@@ -349,7 +358,7 @@ export const initPayment = async (
 
     initializePayment(form, async (error: any, body: any) => {
       if (error) {
-        return res.send('payment error occurred');
+        return res.send({ message: 'payment error occurred' });
       }
 
       const response = JSON.parse(body);
@@ -358,6 +367,7 @@ export const initPayment = async (
         userId: req.userId,
         transactionType: 'Credit',
         amount: form.amount,
+        ref: response.data.reference,
       };
       const transaction = new Transaction(newTransaction);
       await transaction.save();
@@ -375,22 +385,18 @@ export const getReference = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.userId;
-    const transactionId = req.query.transId;
     const transaction = await Transaction.findOne({
-      userId,
-      _id: transactionId,
+      ref: req.query.reference,
     });
     if (transaction?.processed === true) {
       return res.send(
-        `This ${transaction?.status} transaction has already been verified`
+        `This ${transaction?.transactionType} transaction has already been verified`
       );
     }
     const ref: string = req.query.reference as string;
     verifyPayment(ref, async (error: any, body: any) => {
       if (error) {
-        console.log(error);
-        return res.send(error);
+        return res.send({ message: 'Verification error occured', error });
       }
 
       const response = JSON.parse(body);
@@ -421,7 +427,7 @@ export const getReference = async (
         );
 
         const updatedTransaction = await Transaction.findByIdAndUpdate(
-          { _id: transactionId },
+          { _id: transaction?._id },
           { processed: true, status: 'accepted' },
           { new: true }
         );
@@ -433,7 +439,7 @@ export const getReference = async (
         });
       } else {
         const updatedTransaction = await Transaction.findByIdAndUpdate(
-          { _id: transactionId },
+          { _id: transaction?._id },
           { processed: true, status: 'declined' },
           { new: true }
         );
@@ -488,5 +494,48 @@ export const tripHistoryByPassenger = async (req: Request, res: Response) => {
     res
       .status(400)
       .json({ message: 'Internal server error', error: err.message });
+  }
+};
+
+export const bookTrip = async (req: Request, res: Response) => {
+  // Decode the JWT and extract the user ID
+  try {
+    const userId = req.userId;
+
+    const routeId = req.params.routeId;
+
+    try {
+      const route = await Route.findById({ _id: routeId });
+      console.log(route);
+      if (route) {
+        const { pickup, destination, price } = route;
+
+        const user = await User.findById({ _id: userId });
+        console.log(user);
+        if (user) {
+          // if user wallet ballance is less thab trip price return errrror
+          if (user.walletBalance < price) {
+            return res.status(400).json({ message: 'Insufficient fund' });
+          }
+
+          const newTrip = new Trip({
+            pickup: pickup,
+            destination: destination,
+            price: price,
+            passenger: user.name,
+          });
+          await newTrip.save();
+          const newBallance = user.walletBalance - price;
+          await User.findByIdAndUpdate(userId, { walletBalance: newBallance });
+          return res
+            .status(200)
+            .json({ message: 'book successfull', trip: newTrip });
+        }
+      }
+    } catch (error) {
+      return res.status(500).json({ error: 'Route not found' });
+    }
+  } catch (err) {
+    res.status(400).json({ error: 'Invalid token' });
   }
 };

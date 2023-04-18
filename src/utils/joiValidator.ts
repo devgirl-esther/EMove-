@@ -33,6 +33,19 @@ export const loginSchema = Joi.object({
     .min(8)
 })
 
+export const resetPasswordSchema = Joi.object({
+  newPassword: Joi.string()
+    .required()
+    .messages({ 'any.required': 'Password is required' })
+    .min(8),
+    confirmPassword: Joi.string()
+    .valid(Joi.ref('newPassword'))
+    .messages({
+      'any.only': 'The two passwords do not match',
+      'any.required': 'Please re-enter the password',
+    }),
+});
+
 // Define a Joi schema for the route
 const routeSchema = Joi.object({
   pickup: Joi.string().required(),

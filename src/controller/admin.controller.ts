@@ -59,10 +59,25 @@ export const updateDriver = async (
   next: NextFunction
 ) => {
   try {
+
+    const existingDriver = await Driver.findById(req.params.id)
+    const body: any = req.files;
+    const {fullName, operationRoute, phone, accountNo} = req.body
     const driverId = req.params.id;
-    const updatedDriver = await Driver.findByIdAndUpdate(driverId, req.body, {
-      new: true,
-    });
+    const updatedDriver = await Driver.findByIdAndUpdate(
+      driverId,
+      {
+        fullName: fullName || existingDriver?.fullName,
+        operationRoute: operationRoute || existingDriver?.operationRoute,
+        phone: phone || existingDriver?.phone,
+        accountNo: accountNo || existingDriver?.accountNo,
+        photo: body && body.photo ? body.photo[0].path : existingDriver?.photo,
+        driverId: body && body.driverId ? body.driverId[0].path : existingDriver?.driverId,
+      },
+      {
+        new: true,
+      }
+    );
     return res.status(200).send({
       status: 'success',
       message: 'update successful',
@@ -83,8 +98,7 @@ export const getAllDrivers = async (
   next: NextFunction
 ) => {
   try {
-    const driver = req.params;
-    const allDrivers = await Driver.find(driver, req.body, { new: true });
+    const allDrivers = await Driver.find({});
     return res.status(200).send({
       status: 'success',
       message: 'successful',
@@ -104,7 +118,6 @@ export const getOneDriver = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log('get');
   try {
     const driverId = req.params.id;
     const oneDriver = await Driver.findById({ _id: driverId });
@@ -238,8 +251,6 @@ export const updateRoutePrice = async (req: Request, res: Response) => {
   }
 };
 
-
-
 export const tripHistory = async (req: Request, res: Response) => {
   try {
     const result = await Trip.find({});
@@ -252,5 +263,3 @@ export const tripHistory = async (req: Request, res: Response) => {
       .json({ message: 'Internal server error', error: err.message });
   }
 };
-
-

@@ -28,8 +28,8 @@ router.post(
 router.put(
     '/edit-driver/:id',
     upload.fields([
-        { name: 'driverId', maxCount: 1 },
-        { name: 'photo', maxCount: 1 },
+        { name: 'driverId', maxCount: 2 },
+        { name: 'photo', maxCount: 2 },
     ]),
     updateDriver
 );
@@ -44,6 +44,5 @@ router.get('/totalDrivers', totalDrivers);
 router.post('/createRoute', createRoute);
 router.patch('/editRoute/:id', updateRoutePrice);
 router.get('/tripHistory', tripHistory);
-
 
 export default router;

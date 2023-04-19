@@ -9,7 +9,6 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import connect from './db/connect';
-import indexRouter from './routes/index';
 import usersRouter from './routes/users';
 import adminRouter from './routes/admin';
 
@@ -26,7 +25,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
+app.get('/', (req, res) => {
+  res.send('Welcome to the E-Move Api')
+})
+
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/admin', adminRouter);
 

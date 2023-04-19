@@ -14,7 +14,7 @@ import { initializePayment, verifyPayment } from '../utils/paystack';
 import Donor from '../model/donorModel';
 import _ from 'lodash';
 import Transaction from '../model/transactionModel';
-import { loginSchema, userSchema } from '../utils/joiValidator';
+import { loginSchema, resetPasswordSchema, userSchema } from '../utils/joiValidator';
 import Trip from '../model/tripModel';
 
 export const register = async (
@@ -44,8 +44,8 @@ export const register = async (
 
     const hashedPassword = await toHash(userData.password);
 
-    const { ADMIN1_EMAIL, ADMIN2_EMAIL } = process.env;
-    const adminArray = [ADMIN1_EMAIL, ADMIN2_EMAIL];
+    const { ADMIN1_EMAIL, ADMIN2_EMAIL, ADMIN3_EMAIL } = process.env;
+    const adminArray = [ADMIN1_EMAIL, ADMIN2_EMAIL, ADMIN3_EMAIL];
 
     const allUserData = {
       ...userData,
@@ -53,16 +53,15 @@ export const register = async (
       password: hashedPassword,
     };
 
-    console.log(allUserData);
     const userSaved = await new User(allUserData).save();
-    console.log('userSaved', userSaved);
     const token = await new Token({
       userId: userSaved._id,
       token: getToken(userSaved._id),
     }).save();
-    console.log(token);
 
-    const url = `${process.env.BASE_URL}/users/verify/${userSaved._id}/${token.token}`;
+    const BASE_URL = process.env.BASE_URL || 'http://localhost:8081/api/v1';
+
+    const url = `${BASE_URL}/users/verify/${userSaved._id}/${token.token}`;
     const html = `<h1>Email Verification</h1>
         <h2>Hello ${userSaved.name}</h2>
         <p>Click the link below to verify mail</p>
@@ -75,6 +74,7 @@ export const register = async (
       message: 'An email has been sent to your account please verify',
       userId: userSaved._id,
       token: token.token,
+      isAdmin: userSaved.isAdmin,
     });
   } catch (error) {
     return res.status(500).send({
@@ -128,7 +128,7 @@ export const verifyEmail = async (
     //   status: 'success',
     //   message: 'Email verified successfully',
     // });
-    res.redirect('https://emove.netlify.app/users/verify');
+    res.redirect('http://localhost:3000/users/verify');
   } catch (error) {
     return res.status(500).send({
       status: 'error',
@@ -169,6 +169,7 @@ export const login = async (
       walletBalance,
       createdAt,
       loginToken: token,
+      isAdmin: user.isAdmin,
     });
   } catch (error) {
     res.status(500).send('Error occured');
@@ -183,7 +184,6 @@ export const changePassword = async (req: Request, res: Response) => {
 
   const { authorization } = req.headers;
   if (!authorization) {
-    console.log('auth fired');
     return res.status(401).json({ error: 'Access denied. No token provided.' });
   }
 
@@ -261,8 +261,8 @@ export const forgotPassword = async (
         token: crypto.randomBytes(32).toString('hex'),
       }).save();
     }
-    const BASE_URL = process.env.BASE_URL || 'http://localhost:8081';
-    const link = `${BASE_URL}/api/v1/users/password-reset/${user._id}/${token.token}`;
+    const BASE_URL = process.env.BASE_URL || 'http://localhost:8081/api/v1';
+    const link = `${BASE_URL}/users/password-reset/${user._id}/${token.token}`;
     await sendEmail(user.email, 'Password reset', link);
     //send password reset link to email
 
@@ -270,8 +270,31 @@ export const forgotPassword = async (
       message: 'password reset link sent to your email account',
     });
   } catch (error) {
-    res.send('An error occured');
+    res.send({message: 'An error occured'});
     console.log(error);
+  }
+};
+
+
+export const getPasswordReset = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(400).send('invalid link or expired');
+
+    const token = await Token.findOne({
+      userId: user._id,
+      token: req.params.token,
+    });
+    if (!token) return res.status(400).send('Invalid link or expired');
+    await token.delete();
+
+    res.redirect(`http://localhost:3000/reset-password/${user._id}`);
+  } catch (error) {
+    res.send('An error occured');
   }
 };
 
@@ -281,29 +304,23 @@ export const resetPassword = async (
   next: NextFunction
 ) => {
   try {
-    const schema = Joi.object({ password: Joi.string().required() });
-    const { error } = schema.validate(req.body);
-    if (error) return res.status(400).send(error.details[0].message);
-
+    const { error } = resetPasswordSchema.validate(req.body);
+    if (error) {
+      return res.status(400).send({
+        success: false,
+        message: error.details[0].message,
+      });
+    }
     const user = await User.findById(req.params.userId);
-    if (!user)
-      return res.status(400).send({ message: 'invalid link or expired' });
-
-    const token = await Token.findOne({
-      userId: user._id,
-      token: req.params.token,
-    });
-    if (!token)
-      return res.status(400).send({ message: 'Invalid link or expired' });
-
-    user.password = await toHash(req.body.password);
+    if (!user) return res.status(400).send('Invalid User Id');
+    user.password = await toHash(req.body.newPassword);
     await user.save();
-    await token.delete();
 
-    res.send({ message: 'password reset sucessfully.' });
+    res
+      .status(200)
+      .json({ status: 'success', message: 'password reset sucessfully.' });
   } catch (error) {
-    res.send('An error occured');
-    console.log(error);
+    res.send({ message: 'An error occured' });
   }
 };
 
@@ -376,7 +393,9 @@ export const initPayment = async (
         transaction,
       });
     });
-  } catch (error) {}
+  } catch (error) {
+    res.status(400).send({message: " Error initializing payment"})
+  }
 };
 
 export const getReference = async (
@@ -432,11 +451,12 @@ export const getReference = async (
           { new: true }
         );
 
-        return res.send({
-          message: 'Transaction accepted',
-          donor,
-          transaction: updatedTransaction,
-        });
+        res.redirect('http://localhost:3000/user/fund-wallet');
+        // return res.send({
+        //   message: 'Transaction accepted',
+        //   donor,
+        //   transaction: updatedTransaction,
+        // });
       } else {
         const updatedTransaction = await Transaction.findByIdAndUpdate(
           { _id: transaction?._id },
@@ -444,11 +464,12 @@ export const getReference = async (
           { new: true }
         );
 
-        return res.send({
-          message: 'Transaction declined',
-          donor,
-          transaction: updatedTransaction,
-        });
+        res.redirect('http://localhost:3000/user/fund-wallet');
+        // return res.send({
+        //   message: 'Transaction declined',
+        //   donor,
+        //   transaction: updatedTransaction,
+        // });
       }
     });
   } catch (error) {
@@ -463,7 +484,7 @@ export const getTransaction = async (
 ) => {
   try {
     const transaction = await Transaction.find({
-      userId: req.params.userId,
+      userId: req.userId,
     });
     res.send(transaction);
   } catch (error) {
@@ -481,7 +502,6 @@ export const tripHistoryByPassenger = async (req: Request, res: Response) => {
     if (user) {
       const { name } = user;
       const tripsByUser = await Trip.find({ passenger: name });
-      console.log(tripsByUser);
       if (tripsByUser) {
         res.status(200).json({ status: 'success', data: tripsByUser });
       } else {
@@ -506,12 +526,10 @@ export const bookTrip = async (req: Request, res: Response) => {
 
     try {
       const route = await Route.findById({ _id: routeId });
-      console.log(route);
       if (route) {
         const { pickup, destination, price } = route;
 
         const user = await User.findById({ _id: userId });
-        console.log(user);
         if (user) {
           // if user wallet ballance is less thab trip price return errrror
           if (user.walletBalance < price) {
@@ -537,5 +555,25 @@ export const bookTrip = async (req: Request, res: Response) => {
     }
   } catch (err) {
     res.status(400).json({ error: 'Invalid token' });
+  }
+};
+
+export const getUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = req.userId;
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).send({
+        message: 'User not found',
+      });
+    }
+
+    res.status(200).send({ status: 'success', user });
+  } catch (error) {
+    res.status(400).send({ message: 'Error fetching user' });
   }
 };
